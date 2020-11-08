@@ -1,6 +1,7 @@
 # A2IT Tecnologia - Jonas Moura / Braier Alves
 
 # Script criado a partir de vários exemplos encontrados, modificados e organizados nesta versão final.
+# Em modificação constante.
 
 ################################## CONFIGURAÇÃO DE USUÁRIO #####################################
 
