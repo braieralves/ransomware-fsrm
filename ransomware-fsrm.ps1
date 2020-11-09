@@ -14,32 +14,24 @@ $fileTemplateType = "Active"
 # Passive screening: Allow users to save unathorized files (use for monitoring)
 #$fileTemplateType = "Passiv"
 
-# Write the email options to the temporary file - comment out the entire block if no email notification should be set
 $EmailNotification = $env:TEMP + "\tmpEmail001.tmp"
 "Notification=m" >> $EmailNotification
 "To=[Admin Email]" >> $EmailNotification
-## en
+
 "Subject=Unauthorized file from the [Violated File Group] file group detected" >> $EmailNotification
 "Message=User [Source Io Owner] attempted to save [Source File Path] to [File Screen Path] on the [Server] server. This file is in the [Violated File Group] file group, which is not permitted on the server."  >> $EmailNotification
-## de
-#"Subject=Nicht autorisierte Datei erkannt, die mit Dateigruppe [Violated File Group] übereinstimmt" >> $EmailNotification
-#"Message=Das System hat erkannt, dass Benutzer [Source Io Owner] versucht hat, die Datei [Source File Path] unter [File Screen Path] auf Server [Server] zu speichern. Diese Datei weist Übereinstimmungen mit der Dateigruppe [Violated File Group] auf, die auf dem System nicht zulässig ist."  >> $EmailNotification
 
-# Write the event log options to the temporary file - comment out the entire block if no event notification should be set
 $EventNotification = $env:TEMP + "\tmpEvent001.tmp"
 "Notification=e" >> $EventNotification
 "EventType=Warning" >> $EventNotification
-## en
-"Message=User [Source Io Owner] attempted to save [Source File Path] to [File Screen Path] on the [Server] server. This file is in the [Violated File Group] file group, which is not permitted on the server." >> $EventNotification
-## de
-#"Message=Das System hat erkannt, dass Benutzer [Source Io Owner] versucht hat, die Datei [Source File Path] unter [File Screen Path] auf Server [Server] zu speichern. Diese Datei weist Übereinstimmungen mit der Dateigruppe [Violated File Group] auf, die auf dem System nicht zulässig ist." >> $EventNotification
 
+"Message=User [Source Io Owner] attempted to save [Source File Path] to [File Screen Path] on the [Server] server. This file is in the [Violated File Group] file group, which is not permitted on the server." >> $EventNotification
 
 ################################ Funções ################################
 
 Function ConvertFrom-Json20
 {
-    # Deserializes JSON input into PowerShell object output
+    
     Param (
         [Object] $obj
     )
@@ -50,10 +42,7 @@ Function ConvertFrom-Json20
 
 Function New-CBArraySplit
 {
-    <# 
-        Takes an array of file extensions and checks if they would make a string >4Kb, 
-        if so, turns it into several arrays
-    #>
+    
     param(
         $Extensions
     )
@@ -64,41 +53,32 @@ Function New-CBArraySplit
     $WorkingArrayIndex = 1
     $LengthOfStringsInWorkingArray = 0
 
-    # TODO - is the FSRM limit for bytes or characters?
-    #        maybe [System.Text.Encoding]::UTF8.GetBytes($_).Count instead?
-    #        -> in case extensions have Unicode characters in them
-    #        and the character Length is <4Kb but the byte count is >4Kb
 
-    # Take the items from the input array and build up a 
-    # temporary workingarray, tracking the length of the items in it and future commas
     $Extensions | ForEach-Object {
 
         if (($LengthOfStringsInWorkingArray + 1 + $_.Length) -gt 4000) 
         {   
-            # Adding this item to the working array (with +1 for a comma)
-            # pushes the contents past the 4Kb limit
-            # so output the workingArray
+           
             [PSCustomObject]@{
                 index = $WorkingArrayIndex
                 FileGroupName = "$Script:FileGroupName$WorkingArrayIndex"
                 array = $workingArray
             }
             
-            # and reset the workingArray and counters
-            $workingArray = @($_) # new workingArray with current Extension in it
+            
+            $workingArray = @($_) 
             $LengthOfStringsInWorkingArray = $_.Length
             $WorkingArrayIndex++
 
         }
-        else #adding this item to the workingArray is fine
+        else 
         {
             $workingArray += $_
-            $LengthOfStringsInWorkingArray += (1 + $_.Length)  #1 for imaginary joining comma
+            $LengthOfStringsInWorkingArray += (1 + $_.Length) 
         }
     }
 
-    # The last / only workingArray won't have anything to push it past 4Kb
-    # and trigger outputting it, so output that one as well
+    
     [PSCustomObject]@{
         index = ($WorkingArrayIndex)
         FileGroupName = "$Script:FileGroupName$WorkingArrayIndex"
@@ -178,7 +158,6 @@ else
 ## Enumerate shares
 Write-Host "`n####"
 Write-Host "Processing ProtectList.."
-### move file from C:\Windows\System32 or whatever your relative path is to the directory of this script
 if (Test-Path .\ProtectList.txt)
 {
     Move-Item -Path .\ProtectList.txt -Destination $PSScriptRoot\ProtectList.txt -Force
